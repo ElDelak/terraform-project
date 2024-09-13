@@ -1,11 +1,6 @@
 import paho.mqtt.client as mqtt
-import boto3
 import time
-from botocore.exceptions import ClientError
-import queue_wrapper
-
-session = boto3.Session(profile_name='aws')
-dev_s3_client = session.resource('sqs')
+import json
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -17,11 +12,13 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
-    timestamp = round(time.time())
-    data = str(msg.payload).split('|')
-    print('data received: ' + str(data))
-    send_messages(queue, str(msg.payload))
+    m_decode=str(msg.payload.decode("utf-8","ignore"))
+    print("data Received type",type(m_decode))
+    print("data Received",m_decode)
+    print("Converting from Json to Object")
+    m_in=json.loads(m_decode.replace("\'", "\"")) #decode json data
+    print(type(m_in))
+    print("broker 2 address = ",m_in["d"])
 
 def send_messages(queue, messages):
     try:      
@@ -54,5 +51,4 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 client.connect("test.mosquitto.org", 1883, 60)
-queue = queue_wrapper.get_queue('BasculeDataQueue')
 client.loop_forever()

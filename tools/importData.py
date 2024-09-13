@@ -6,36 +6,35 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource('dynamodb')
-ssm = boto3.client('ssm')
 table_name = os.environ.get('table_name')
 
 def lambda_handler(event, context):
     for message in event['Records']:
         table = dynamodb.Table('basculedata')
-        data = message['body'].split('|')
-        LastSavedValue = getLastSavedValue(data[4])
-        debit = data[0][2:]
+        data = json.loads(message['body'].replace("\'", "\""))
+        LastSavedValue = getLastSavedValue(data["id"])
+        debit = data["d"]
         if LastSavedValue:
             first_matching_item = LastSavedValue[0]
-            if (int(data[2]) < int(first_matching_item['mt'])) or (int(data[1]) == -1 and  int(debit) == -1):
-                data[2] = first_matching_item['mt']
+            if (int(data["mt"]) < int(first_matching_item['mt'])) or (int(data["d"]) == -1 and  int(debit) == -1):
+                data["mt"] = first_matching_item['mt']
             timestamp_value = int(time.time())
             # Assuming you want to return the first matching item
             print('Found item:', first_matching_item)
-            deltaMT = int(data[2]) - int(first_matching_item['mt']) if int(data[2]) - int(first_matching_item['mt']) >=0 else 0
+            deltaMT = int(data["mt"]) - int(first_matching_item['mt']) if int(data["mt"]) - int(first_matching_item['mt']) >=0 else 0
             deltats = timestamp_value - int(first_matching_item['timestamp'])
             # check if new Day
-            isNewDay = checkNewDays(data[4], first_matching_item['timestamp'])
-            idPoste = str(getCurrentPoste(data[4]))
+            isNewDay = checkNewDays(data["id"], first_matching_item['timestamp'])
+            idPoste = str(getCurrentPoste(data["id"]))
             item = {}
             table = dynamodb.Table(table_name)
             if isNewDay == True:
                 item = {
-                'idBascule': data[4],
+                'idBascule': data["id"],
                 'timestamp': timestamp_value,
                 'debit': debit,
-                'vitesse': data[1],
-                'mt': int(data[2]),
+                'vitesse': data["v"],
+                'mt': int(data["mt"]),
                 'cumulMT' : deltaMT,
                 'mtP1' : 0,'mtP2' : 0,'mtP3' : 0,
                 'tf': 0, 'tfP1': 0, 'tfP2': 0, 'tfP3': 0, 
@@ -46,22 +45,22 @@ def lambda_handler(event, context):
                 if int(debit != 0):
                     item['tf'] = deltats
                     item['tfP'+idPoste] = deltats
-                if int(data[1] == 0):
+                if int(data["v"] == 0):
                     item['ta'] = deltats
                     item['taP'+idPoste] = deltats
-                if int(debit) == 0 and int(data[1]) != 0:
+                if int(debit) == 0 and int(data["v"]) != 0:
                     item['tmav'] = deltats
                     item['tmavP'+idPoste] = deltats
-                if int(debit) == -1  and int(data[1]) == -1 :
+                if int(debit) == -1  and int(data["v"]) == -1 :
                     item['tndf'] = deltats
                     item['tndfP'+idPoste] = deltats
             else:    
                 item = {
-                'idBascule': data[4],
+                'idBascule': data["id"],
                 'timestamp': timestamp_value,
                 'debit': debit,
-                'vitesse': data[1],
-                'mt': int(data[2]),
+                'vitesse': data["v"],
+                'mt': int(data["mt"]),
                 'cumulMT' : int(first_matching_item['cumulMT']) + deltaMT,
                 'mtP1' : int(first_matching_item['mtP1']),'mtP2' : int(first_matching_item['mtP2']),'mtP3' : int(first_matching_item['mtP3']),
                 'tf': int(first_matching_item['tf']), 'tfP1': int(first_matching_item['tfP1']), 'tfP2': int(first_matching_item['tfP2']), 'tfP3': int(first_matching_item['tfP3']), 
@@ -72,13 +71,13 @@ def lambda_handler(event, context):
                 if int(debit != 0):
                     item['tf'] +=  deltats
                     item['tfP'+idPoste] += deltats
-                if int(data[1] == 0):
+                if int(data["v"] == 0):
                     item['ta'] += deltats
                     item['taP'+idPoste] += deltats
-                if int(debit) == 0 and int(data[1]) != 0:
+                if int(debit) == 0 and int(data["v"]) != 0:
                     item['tmav'] += deltats
                     item['tmavP'+idPoste] += deltats
-                if int(debit) == -1  and int(data[1]) == -1 :
+                if int(debit) == -1  and int(data["v"]) == -1 :
                     item['tndf'] += deltats
                     item['tndfP'+idPoste] += deltats
             table.put_item(Item=item)
@@ -88,11 +87,11 @@ def lambda_handler(event, context):
             table = dynamodb.Table(table_name)
             timestamp_value = int(time.time())
             item = {
-            'idBascule': data[4],
+            'idBascule': data["id"],
             'timestamp': timestamp_value,
             'debit': debit,
-            'vitesse': data[1],
-            'mt': data[2],
+            'vitesse': data["v"],
+            'mt': data["mt"],
             'cumulMT' : '0',
             'mtP1' : 0,'mtP2' : 0,'mtP3' : 0,
             'tf': 0, 'tfP1': 0, 'tfP2': 0, 'tfP3': 0, 

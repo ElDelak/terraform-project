@@ -1,6 +1,6 @@
 # Create an S3 bucket for hosting static website files
 resource "aws_s3_bucket" "static_website" {
-  bucket = var.bucket_name
+  bucket = "${var.bucket_name}"
   tags   = { Name = "iot" }
 
   provisioner "local-exec" {
