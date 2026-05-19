@@ -45,8 +45,6 @@ resource "aws_instance" "myec2" {
       "sudo apt-get update -y",
       "sudo apt-get install -y python3-boto3",
       "sudo apt-get install -y awscli",  # Install AWS CLI
-      #"aws configure --profile aws set aws_access_key_id AKIAXEVXYK7IOTCUOGU3",
-      #"aws configure --profile aws set aws_secret_access_key 5Rnd4AVwxSX+ii0xsiHVtNTIEPF6QqQymbBj2Hh3",
       "aws configure --profile aws set region us-east-1",  # Set your desired region
       "aws configure --profile aws set output json",
       "sudo chmod +x /home/ubuntu/importMqttEc2.py",
