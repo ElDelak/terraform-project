@@ -123,7 +123,7 @@ resource "aws_security_group" "mysg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow SSH from any IP address (for demonstration purposes)
+    cidr_blocks = ["your-ip/32"]   # Allow SSH from any IP address (for demonstration purposes)
   }
 
   ingress {
